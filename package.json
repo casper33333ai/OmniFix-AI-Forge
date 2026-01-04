@@ -1,0 +1,15 @@
+{
+  "name": "omnifix-ai-forge",
+  "version": "15.2.0",
+  "scripts": {
+    "build": "node convert-to-apk.js"
+  },
+  "dependencies": {
+    "puppeteer": "^22.0.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  }
+}
