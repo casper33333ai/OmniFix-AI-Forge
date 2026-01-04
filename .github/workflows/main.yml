@@ -1,0 +1,53 @@
+name: omnifix-forge-v15-2
+on: [push, workflow_dispatch]
+jobs:
+  forge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: ⚙️ System Hardening
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgbm-dev libnss3 libatk-bridge2.0-0 libgtk-3-0 libasound2 \
+            libxshmfence-dev libxkbcommon0 libxcomposite1 libxdamage1 \
+            libxrandr2 libpango-1.0-0 libcairo2 xvfb \
+            google-chrome-stable
+          
+      - name: ⚙️ Node Configuration
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          
+      - name: 📦 Force Browser Download
+        run: |
+          # We force a specific local Chromium installation to guarantee path control
+          npm install puppeteer-extra puppeteer-extra-plugin-stealth puppeteer @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+          npx puppeteer browsers install chrome
+          # Save the path to an env variable for the next step
+          echo "CHROME_BIN=$(npx puppeteer browsers install chrome | grep 'Downloaded to' | awk '{print $NF}')/chrome" >> $GITHUB_ENV
+          
+      - name: 🕶️ Scrape (Omni-Fix Protocol)
+        run: |
+          mkdir -p www
+          # Use xvfb-run to provide a virtual display context, critical for preventing Exit 100
+          xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" node scraper.js
+        env:
+          AI_URL: ${{ secrets.AI_URL }}
+          SESSION_COOKIES: ${{ secrets.SESSION_COOKIES }}
+          
+      - name: ☕ Java Setup
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+          
+      - name: 🏗️ Forge Omni-Fix APK
+        run: node convert-to-apk.js
+        
+      - name: 📦 Deliver Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmniFix-AI-Native-V15-2-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
